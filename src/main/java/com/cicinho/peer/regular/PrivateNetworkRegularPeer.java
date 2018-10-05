@@ -11,6 +11,7 @@ import com.typesafe.config.ConfigFactory;
 public class PrivateNetworkRegularPeer {
 
 	private static String logger = "RegularPeer1";
+	private static String externalIp = "198.168.1.5";
 
 	/**
 	 * Spring configuration class for the Regular peer
@@ -28,7 +29,8 @@ public class PrivateNetworkRegularPeer {
 						// all peers in the same network need to use the same genesis block
 						"genesis = genesis.json \n" +
 						// two peers need to have separate database dirs
-						"database.dir = database \n";
+						"database.dir = database \n"
+						+ "peer.discovery.external.ip = " + externalIp;;
 
 		@Bean
 		public RegularNode node() {
