@@ -17,38 +17,45 @@ public class RegularNode extends BasicSample {
 
 	@Override
 	public void onSyncDone() {
+
 		/*
 		 * new Thread(() -> { try { generateTransactions(); } catch (Exception e) {
 		 * logger.error("Error generating tx: ", e); } }).start();
 		 */
-		Scanner scanner = new Scanner(System.in);
-		int option;
-		do {
-			System.out.println("MENU");
-			System.out.println("Digite 1 para gerar um transação");
-			System.out.println("Digite 2 para gerar uma transação a cada 7 segundos");
+		new Thread(() -> {
+			Scanner scanner = new Scanner(System.in);
+			int option, nonce;
+			ECKey senderKey = ECKey
+					.fromPrivate(Hex.decode("6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec"));
+			nonce = ethereum.getRepository().getNonce(senderKey.getAddress()).intValue();
+			do {
+				System.out.println("MENU");
+				System.out.println("Digite 1 para gerar um transação");
+				System.out.println("Digite 2 para gerar uma transação a cada 7 segundos");
 
-			option = scanner.nextInt();
+				option = scanner.nextInt();
 
-			switch (option) {
-			case 1:
-				try {
-					generateOneTransaction();
-				} catch (Exception e) {
-					logger.error("Error generating tx: ", e);
+				switch (option) {
+				case 1:
+					try {
+						generateOneTransaction(nonce);
+						++nonce;
+					} catch (Exception e) {
+						logger.error("Error generating tx: ", e);
+					}
+					break;
+				case 2:
+					try {
+						generateTransactions();
+					} catch (Exception e) {
+						logger.error("Error generating tx: ", e);
+					}
+					break;
+				default:
+					break;
 				}
-				break;
-			case 2:
-				try {
-					generateTransactions();
-				} catch (Exception e) {
-					logger.error("Error generating tx: ", e);
-				}
-				break;
-			default:
-				break;
-			}
-		} while (option != 0);
+			} while (option != 0);
+		}).start();
 	}
 
 	/**
@@ -76,7 +83,7 @@ public class RegularNode extends BasicSample {
 		}
 	}
 
-	private void generateOneTransaction() throws Exception {
+	private void generateOneTransaction(int nonce) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender which some coins from the genesis
@@ -84,8 +91,7 @@ public class RegularNode extends BasicSample {
 				.fromPrivate(Hex.decode("6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec"));
 		byte[] receiverAddr = Hex.decode("5db10750e8caff27f906b41c71b3471057dd2004");
 
-		int i = ethereum.getRepository().getNonce(senderKey.getAddress()).intValue();
-		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(i),
+		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
 				ByteUtil.longToBytesNoLeadZeroes(50_000_000_000L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
 				receiverAddr, new byte[] { 77 }, new byte[0], ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
