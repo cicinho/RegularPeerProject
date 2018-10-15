@@ -29,6 +29,7 @@ public class RegularNode extends BasicSample {
 					.fromPrivate(Hex.decode("6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec"));
 			nonce = ethereum.getRepository().getNonce(senderKey.getAddress()).intValue();
 			do {
+				//Menu de ajuda
 				System.out.println("MENU");
 				System.out.println("Digite 1 para gerar um transação");
 				System.out.println("Digite 2 para gerar uma transação a cada 7 segundos");
