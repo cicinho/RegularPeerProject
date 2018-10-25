@@ -11,22 +11,19 @@ import org.spongycastle.util.encoders.Hex;
 public class RegularNode extends BasicSample {
 
 	// PrivateKey
-	// 3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c
+	private String senderPrivateAddress = "3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c";
 	// PublicKey
-	// 5db10750e8caff27f906b41c71b3471057dd2004
+	//private String receiverPublicAdrress = "5db10750e8caff27f906b41c71b3471057dd2004";
 
 	// PrivateKey
-	// 6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec
+	//private String senderPrivateAddress = "6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec";
 	// PublicKey
-	// 31e2e1ed11951c7091dfba62cd4b7145e947219c
+	//private String receiverPublicAdrress = "31e2e1ed11951c7091dfba62cd4b7145e947219c;
 
 	// PrivateKey
-	// fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d
+	//private String senderPrivateAddress = "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d";
 	// PublicKey
-	// ee0250c19ad59305b2bdb61f34b45b72fe37154f
-	
-	private String senderPrivateAddress = "6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec";
-	private String receiverPublicAdrress = "31e2e1ed11951c7091dfba62cd4b7145e947219c";
+	private String receiverPublicAdrress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
 
 	public RegularNode(String logger) {
 		// peers need different loggers
