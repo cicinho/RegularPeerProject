@@ -32,7 +32,6 @@ public class RegularNode extends BasicSample {
 
 	@Override
 	public void onSyncDone() {
-
 		/*
 		 * new Thread(() -> { try { generateTransactions(); } catch (Exception e) {
 		 * logger.error("Error generating tx: ", e); } }).start();
@@ -47,6 +46,7 @@ public class RegularNode extends BasicSample {
 				System.out.println("MENU");
 				System.out.println("Digite 1 para gerar um transação");
 				System.out.println("Digite 2 para gerar uma transação a cada 7 segundos");
+				System.out.println("Digite 3 para visualizar o balanço das contas");
 
 				option = scanner.nextInt();
 
@@ -66,12 +66,17 @@ public class RegularNode extends BasicSample {
 						logger.error("Error generating tx: ", e);
 					}
 					break;
+				case 3:
+					getBalances();
+					break;
 				default:
 					break;
 				}
 			} while (option != 0);
 		}).start();
 	}
+	
+	
 
 	/**
 	 * Generate one simple value transfer transaction each 7 seconds. Thus blocks
@@ -112,5 +117,12 @@ public class RegularNode extends BasicSample {
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
+	}
+	
+	private void getBalances() {
+		System.out.println("BALANCES");
+		System.out.println("Balance MINER: " + ethereum.getRepository().getBalance(Hex.decode("31e2e1ed11951c7091dfba62cd4b7145e947219c")));
+		System.out.println("Balance SENDER: " + ethereum.getRepository().getBalance(ECKey.fromPrivate(Hex.decode(senderPrivateAddress)).getAddress()));
+		System.out.println("Balance RECEIVER: " + ethereum.getRepository().getBalance(Hex.decode(receiverPublicAdrress)) + "\n\n\n");		
 	}
 }
