@@ -5,16 +5,14 @@ import java.util.List;
 
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
-import org.springframework.stereotype.Component;
 
-@Component
 public class NodeWallet {
 
-	List<Transaction> sentTransactions;
+	private List<Transaction> sentTransactions;
 	
-	List<Transaction> receivedTransactions;
+	private List<Transaction> receivedTransactions;
 	
-	List<TransactionReceipt> sentTransactionReceipts;
+	private List<TransactionReceipt> sentTransactionReceipts;
 	
 	public NodeWallet() {
 		this.sentTransactions = new ArrayList<>();
@@ -32,7 +30,6 @@ public class NodeWallet {
 
 	public List<TransactionReceipt> getSentTransactionReceipts() {
 		return sentTransactionReceipts;
-	}
-	
+	}	
 	
 }
