@@ -135,7 +135,7 @@ public class RegularNode extends BasicSample {
 		for (int i = ethereum.getRepository().getNonce(senderKey.getAddress()).intValue(), j = 0; j < 20000; i++, j++) {
 			{
 				Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(i),
-						ByteUtil.longToBytesNoLeadZeroes(50_000_000_000L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
+						ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
 						receiverAddr, new byte[] { 77 }, new byte[0], ethereum.getChainIdForNextBlock());
 				tx.sign(senderKey);
 				logger.info("<== Submitting tx: " + tx);
@@ -153,7 +153,7 @@ public class RegularNode extends BasicSample {
 		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
 
 		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
-				ByteUtil.longToBytesNoLeadZeroes(50_000_000_000L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
+				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
 				receiverAddr, new byte[] { 77 }, new byte[0], ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
@@ -205,17 +205,19 @@ public class RegularNode extends BasicSample {
 	}
 
 	private void printSentTransactionByNode(NodeWallet nodeWallet) {
-		System.out.println("Sent Transactions by this Node:");
+		System.out.println("\nSent Transactions by this Node:");
 		for (Transaction t : nodeWallet.getSentTransactions()) {
 			System.out.println(t.toString());
 		}
+		System.out.println("\n\n\n");
 	}
 	
 	private void printReceivedTransactionByNode(NodeWallet nodeWallet) {
-		System.out.println("Receive Transactions by this Node:");
+		System.out.println("\nReceive Transactions by this Node:");
 		for (Transaction t : nodeWallet.getReceivedTransactions()) {
 			System.out.println(t.toString());
 		}
+		System.out.println("\n\n\n");
 	}
 	
 	private NodeWallet getAllTransactionsByWallet(NodeWallet nodeWallet) {
