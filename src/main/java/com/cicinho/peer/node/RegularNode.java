@@ -15,7 +15,9 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.samples.BasicSample;
 import org.ethereum.util.ByteUtil;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.util.SerializationUtils;
 
+import com.cicinho.peer.transaction.PatientMedicalRecordTransaction;
 import com.cicinho.peer.wallet.NodeWallet;
 
 public class RegularNode extends BasicSample {
@@ -72,6 +74,7 @@ public class RegularNode extends BasicSample {
 				System.out.println("Digite 3 para visualizar o balanço das contas");
 				System.out.println("Digite 4 para visualizar as transações enviadas pelo nó");
 				System.out.println("Digite 5 para visualizar as transações recebidas pelo nó");
+				System.out.println("Digite 6 para gerar uma PatientMedicalRecordTransaction");
 
 				option = scanner.nextInt();
 
@@ -99,6 +102,13 @@ public class RegularNode extends BasicSample {
 					break;
 				case 5:
 					printReceivedTransactionByNode(nodeWallet);
+					break;
+				case 6:
+					try {
+						generateOnePatientMedicalRecordTransaction(nonce);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					break;
 				default:
 					break;
@@ -168,6 +178,33 @@ public class RegularNode extends BasicSample {
 			}
 		}).start();
 	}
+	
+	private void generateOnePatientMedicalRecordTransaction(int nonce) throws Exception {
+		logger.info("Start generating a transaction...");
+
+		// the sender from the genesis
+		ECKey senderKey = ECKey.fromPrivate(Hex.decode(nodeWallet.getPrivateKey()));
+		
+		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
+
+		PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400, "");
+		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
+				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
+				receiverAddr, new byte[] { 0 }, SerializationUtils.serialize(pmrt), ethereum.getChainIdForNextBlock());
+	
+		tx.sign(senderKey);
+		logger.info("<== Submitting tx: " + tx);
+		ethereum.submitTransaction(tx);
+
+		new Thread(() -> {
+			try {
+				TransactionReceipt tr = waitForTx(tx.getHash());
+				nodeWallet.getSentTransactions().add(tr.getTransaction());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}).start();
+	}
 
 	protected TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException {
 		ByteArrayWrapper txHashW = new ByteArrayWrapper(txHash);
@@ -208,6 +245,8 @@ public class RegularNode extends BasicSample {
 		System.out.println("\nSent Transactions by this Node:");
 		for (Transaction t : nodeWallet.getSentTransactions()) {
 			System.out.println(t.toString());
+			if (t.getData() != null) 
+				System.out.println(SerializationUtils.deserialize(t.getData()) + "\n");
 		}
 		System.out.println("\n\n\n");
 	}
