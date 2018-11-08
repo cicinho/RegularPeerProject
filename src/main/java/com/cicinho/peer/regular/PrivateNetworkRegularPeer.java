@@ -13,8 +13,6 @@ import com.cicinho.peer.node.RegularNode;
 import com.typesafe.config.ConfigFactory;
 
 public class PrivateNetworkRegularPeer {
-
-	private static String logger = "RegularPeer1";
 	
 	static Properties properties;
 
@@ -42,7 +40,7 @@ public class PrivateNetworkRegularPeer {
 
 		@Bean
 		public RegularNode node() {
-			return new RegularNode(logger);
+			return new RegularNode(properties.getProperty("node.name"));
 		}
 
 		/**
