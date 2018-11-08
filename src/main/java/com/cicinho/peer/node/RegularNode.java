@@ -106,6 +106,7 @@ public class RegularNode extends BasicSample {
 				case 6:
 					try {
 						generateOnePatientMedicalRecordTransaction(nonce);
+						++nonce;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -146,7 +147,7 @@ public class RegularNode extends BasicSample {
 			{
 				Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(i),
 						ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
-						receiverAddr, new byte[] { 77 }, new byte[0], ethereum.getChainIdForNextBlock());
+						receiverAddr, new byte[] { 0 }, new byte[0], ethereum.getChainIdForNextBlock());
 				tx.sign(senderKey);
 				logger.info("<== Submitting tx: " + tx);
 				ethereum.submitTransaction(tx);
@@ -164,7 +165,7 @@ public class RegularNode extends BasicSample {
 
 		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
 				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
-				receiverAddr, new byte[] { 77 }, new byte[0], ethereum.getChainIdForNextBlock());
+				receiverAddr, new byte[] { 0 }, new byte[0], ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
@@ -184,14 +185,12 @@ public class RegularNode extends BasicSample {
 
 		// the sender from the genesis
 		ECKey senderKey = ECKey.fromPrivate(Hex.decode(nodeWallet.getPrivateKey()));
-		
 		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
 
 		PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400, "");
 		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
 				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
 				receiverAddr, new byte[] { 0 }, SerializationUtils.serialize(pmrt), ethereum.getChainIdForNextBlock());
-	
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
@@ -244,9 +243,9 @@ public class RegularNode extends BasicSample {
 	private void printSentTransactionByNode(NodeWallet nodeWallet) {
 		System.out.println("\nSent Transactions by this Node:");
 		for (Transaction t : nodeWallet.getSentTransactions()) {
-			System.out.println(t.toString());
+			System.out.println("\n" + t.toString());
 			if (t.getData() != null) 
-				System.out.println(SerializationUtils.deserialize(t.getData()) + "\n");
+				System.out.println(SerializationUtils.deserialize(t.getData()));
 		}
 		System.out.println("\n\n\n");
 	}
