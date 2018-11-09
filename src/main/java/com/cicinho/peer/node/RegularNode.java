@@ -19,7 +19,7 @@ import com.cicinho.peer.transaction.PatientMedicalRecordTransaction;
 import com.cicinho.peer.wallet.NodeWallet;
 
 public class RegularNode extends BasicSample {
-	
+
 	private Map<String, NodeWallet> nodeWalletsMap;
 
 	public RegularNode(String logger) {
@@ -37,26 +37,28 @@ public class RegularNode extends BasicSample {
 				RegularNode.this.onBlock(block, receipts);
 			}
 		});
-		
+
 		// PrivateKey
 		String privateKeySender = "3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c";
 		// PublicKey
-		//String receiverPublicAddress = "5db10750e8caff27f906b41c71b3471057dd2004";
+		// String receiverPublicAddress = "5db10750e8caff27f906b41c71b3471057dd2004";
 
 		// PrivateKey
-		//String privateKeySender = "6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec";
+		// String privateKeySender =
+		// "6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec";
 		// PublicKey
-		//String receiverPublicAddress = "31e2e1ed11951c7091dfba62cd4b7145e947219c;
+		// String receiverPublicAddress = "31e2e1ed11951c7091dfba62cd4b7145e947219c;
 
 		// PrivateKey
-		//String privateKeySender = "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d";
+		// String privateKeySender =
+		// "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d";
 		// PublicKey
 		String receiverPublicAddress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
-		
+
 		NodeWallet nodeWallet = new NodeWallet(privateKeySender);
-		
+
 		nodeWalletsMap.put(nodeWallet.getPublicKey(), nodeWallet);
-		
+
 		getAllTransactionsByWallet(nodeWallet);
 
 		new Thread(() -> {
@@ -73,6 +75,7 @@ public class RegularNode extends BasicSample {
 				System.out.println("Digite 4 para visualizar as transações enviadas pelo nó");
 				System.out.println("Digite 5 para visualizar as transações recebidas pelo nó");
 				System.out.println("Digite 6 para gerar uma PatientMedicalRecordTransaction");
+				System.out.println("Digite 7 para gerar uma PatientMedicalRecordTransaction a cada 7 segundos");
 
 				option = scanner.nextInt();
 
@@ -103,9 +106,25 @@ public class RegularNode extends BasicSample {
 					break;
 				case 6:
 					try {
-						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400, "");
+						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(
+								nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400,
+								"");
 						sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, pmrt, receiverPublicAddress);
 						++nonce;
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					break;
+				case 7:
+					try {
+						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(
+								nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400,
+								"");
+						while (true) {
+							sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, pmrt, receiverPublicAddress);
+							++nonce;
+							Thread.sleep(3000);
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -145,8 +164,8 @@ public class RegularNode extends BasicSample {
 		for (int i = ethereum.getRepository().getNonce(senderKey.getAddress()).intValue(), j = 0; j < 20000; i++, j++) {
 			{
 				Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(i),
-						ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
-						receiverAddr, new byte[] { 0 }, new byte[0], ethereum.getChainIdForNextBlock());
+						ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff), receiverAddr,
+						new byte[] { 0 }, new byte[0], ethereum.getChainIdForNextBlock());
 				tx.sign(senderKey);
 				logger.info("<== Submitting tx: " + tx);
 				ethereum.submitTransaction(tx);
@@ -155,31 +174,33 @@ public class RegularNode extends BasicSample {
 		}
 	}
 
-	private void generateOneTransaction(int nonce, NodeWallet nodeWallet, String receiverPublicAddress) throws Exception {
+	private void generateOneTransaction(int nonce, NodeWallet nodeWallet, String receiverPublicAddress)
+			throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender which some coins from the genesis
 		ECKey senderKey = ECKey.fromPrivate(Hex.decode(nodeWallet.getPrivateKey()));
 		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
 
-		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
-				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
-				receiverAddr, new byte[] { 0 }, new byte[0], ethereum.getChainIdForNextBlock());
+		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce), ByteUtil.longToBytesNoLeadZeroes(0L),
+				ByteUtil.longToBytesNoLeadZeroes(0xfffff), receiverAddr, new byte[] { 0 }, new byte[0],
+				ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
 	}
-	
-	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet, PatientMedicalRecordTransaction pmrt, String receiverPublicAddress) throws Exception {
+
+	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet,
+			PatientMedicalRecordTransaction pmrt, String receiverPublicAddress) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender from the genesis
 		ECKey senderKey = ECKey.fromPrivate(Hex.decode(nodeWallet.getPrivateKey()));
 		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
 
-		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
-				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
-				receiverAddr, new byte[] { 0 }, SerializationUtils.serialize(pmrt), ethereum.getChainIdForNextBlock());
+		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce), ByteUtil.longToBytesNoLeadZeroes(0L),
+				ByteUtil.longToBytesNoLeadZeroes(0xfffff), receiverAddr, new byte[] { 0 },
+				SerializationUtils.serialize(pmrt), ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
@@ -196,33 +217,33 @@ public class RegularNode extends BasicSample {
 		printTransactions(nodeWallet.getSentTransactions());
 		System.out.println("\n\n\n");
 	}
-	
+
 	private void printReceivedTransactionByNode(NodeWallet nodeWallet) {
 		System.out.println("\nReceive Transactions by this Node:");
 		printTransactions(nodeWallet.getReceivedTransactions());
 		System.out.println("\n\n\n");
 	}
-	
+
 	private void printTransactions(List<Transaction> transactions) {
 		for (Transaction t : transactions) {
 			System.out.println("\n" + t.toString());
-			if (t.getData() != null) 
+			if (t.getData() != null)
 				System.out.println(SerializationUtils.deserialize(t.getData()));
 		}
 	}
-	
+
 	private NodeWallet getAllTransactionsByWallet(NodeWallet nodeWallet) {
 		String nodeWalletAddress = nodeWallet.getPublicKey();
-		//Block 0 is the genesis block
-		for(int i = 1; i < ethereum.getBlockchain().getBestBlock().getNumber(); i++) {
-			for (Transaction t: ethereum.getBlockchain().getBlockByNumber(i).getTransactionsList()) {
-				if(nodeWalletAddress.equals(ByteUtil.toHexString(t.getSender()))) {
+		// Block 0 is the genesis block
+		for (int i = 1; i < ethereum.getBlockchain().getBestBlock().getNumber(); i++) {
+			for (Transaction t : ethereum.getBlockchain().getBlockByNumber(i).getTransactionsList()) {
+				if (nodeWalletAddress.equals(ByteUtil.toHexString(t.getSender()))) {
 					nodeWallet.getSentTransactions().add(t);
-				} else if(nodeWalletAddress.equals(ByteUtil.toHexString(t.getReceiveAddress()))) {
+				} else if (nodeWalletAddress.equals(ByteUtil.toHexString(t.getReceiveAddress()))) {
 					nodeWallet.getReceivedTransactions().add(t);
 				}
 			}
-		}		
+		}
 		return nodeWallet;
 	}
 }
