@@ -1,6 +1,5 @@
 package com.cicinho.peer.node;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +9,6 @@ import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.ECKey;
-import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.samples.BasicSample;
 import org.ethereum.util.ByteUtil;
@@ -36,17 +34,13 @@ public class RegularNode extends BasicSample {
 	// "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d"
 	// PublicKey
 	private String receiverPublicAddress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
-
-	private NodeWallet nodeWallet;
-
-	private Map<ByteArrayWrapper, TransactionReceipt> txWaiters = Collections
-			.synchronizedMap(new HashMap<ByteArrayWrapper, TransactionReceipt>());
+	
+	private Map<String, NodeWallet> nodeWalletsMap;
 
 	public RegularNode(String logger) {
 		// peers need different loggers
 		super(logger);
-
-		nodeWallet = new NodeWallet(privateKeySender);
+		nodeWalletsMap = new HashMap<String, NodeWallet>();
 	}
 
 	@Override
@@ -58,6 +52,10 @@ public class RegularNode extends BasicSample {
 				RegularNode.this.onBlock(block, receipts);
 			}
 		});
+		
+		NodeWallet nodeWallet = new NodeWallet(privateKeySender);
+		
+		nodeWalletsMap.put(nodeWallet.getPublicKey(), nodeWallet);
 		
 		getAllTransactionsByWallet(nodeWallet);
 
@@ -81,7 +79,7 @@ public class RegularNode extends BasicSample {
 				switch (option) {
 				case 1:
 					try {
-						generateOneTransaction(nonce);
+						generateOneTransaction(nonce, nodeWallet);
 						++nonce;
 					} catch (Exception e) {
 						logger.error("Error generating tx: ", e);
@@ -89,13 +87,13 @@ public class RegularNode extends BasicSample {
 					break;
 				case 2:
 					try {
-						generateTransactions();
+						generateTransactions(nodeWallet);
 					} catch (Exception e) {
 						logger.error("Error generating tx: ", e);
 					}
 					break;
 				case 3:
-					getBalances();
+					getBalances(nodeWallet);
 					break;
 				case 4:
 					printSentTransactionByNode(nodeWallet);
@@ -105,7 +103,8 @@ public class RegularNode extends BasicSample {
 					break;
 				case 6:
 					try {
-						generateOnePatientMedicalRecordTransaction(nonce);
+						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400, "");
+						sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, pmrt);
 						++nonce;
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -120,14 +119,14 @@ public class RegularNode extends BasicSample {
 
 	private void onBlock(Block block, List<TransactionReceipt> receipts) {
 		for (TransactionReceipt receipt : receipts) {
-			ByteArrayWrapper txHashW = new ByteArrayWrapper(receipt.getTransaction().getHash());
-			if (txWaiters.containsKey(txHashW)) {
-				txWaiters.put(txHashW, receipt);
-				synchronized (this) {
-					notifyAll();
-				}
-			} else if (nodeWallet.getPublicKey().equals(ByteUtil.toHexString(receipt.getTransaction().getReceiveAddress()))) {
-				nodeWallet.getReceivedTransactions().add(receipt.getTransaction());
+			Transaction transaction = receipt.getTransaction();
+			String transactionSenderAddress = ByteUtil.toHexString(transaction.getSender());
+			String transactionReceiverAddress = ByteUtil.toHexString(transaction.getReceiveAddress());
+			if (nodeWalletsMap.containsKey(transactionSenderAddress)) {
+				nodeWalletsMap.get(transactionSenderAddress).getSentTransactions().add(transaction);
+			}
+			if (nodeWalletsMap.containsKey(transactionReceiverAddress)) {
+				nodeWalletsMap.get(transactionReceiverAddress).getReceivedTransactions().add(transaction);
 			}
 		}
 	}
@@ -136,7 +135,7 @@ public class RegularNode extends BasicSample {
 	 * Generate one simple value transfer transaction each 7 seconds. Thus blocks
 	 * will include one, several and none transactions
 	 */
-	private void generateTransactions() throws Exception {
+	private void generateTransactions(NodeWallet nodeWallet) throws Exception {
 		logger.info("Start generating transactions...");
 
 		// the sender which some coins from the genesis
@@ -156,7 +155,7 @@ public class RegularNode extends BasicSample {
 		}
 	}
 
-	private void generateOneTransaction(int nonce) throws Exception {
+	private void generateOneTransaction(int nonce, NodeWallet nodeWallet) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender which some coins from the genesis
@@ -169,68 +168,24 @@ public class RegularNode extends BasicSample {
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
-
-		new Thread(() -> {
-			try {
-				TransactionReceipt tr = waitForTx(tx.getHash());
-				nodeWallet.getSentTransactions().add(tr.getTransaction());
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}).start();
 	}
 	
-	private void generateOnePatientMedicalRecordTransaction(int nonce) throws Exception {
+	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet, PatientMedicalRecordTransaction pmrt) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender from the genesis
 		ECKey senderKey = ECKey.fromPrivate(Hex.decode(nodeWallet.getPrivateKey()));
 		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
 
-		PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400, "");
 		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce),
 				ByteUtil.longToBytesNoLeadZeroes(0L), ByteUtil.longToBytesNoLeadZeroes(0xfffff),
 				receiverAddr, new byte[] { 0 }, SerializationUtils.serialize(pmrt), ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
-
-		new Thread(() -> {
-			try {
-				TransactionReceipt tr = waitForTx(tx.getHash());
-				nodeWallet.getSentTransactions().add(tr.getTransaction());
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}).start();
 	}
 
-	protected TransactionReceipt waitForTx(byte[] txHash) throws InterruptedException {
-		ByteArrayWrapper txHashW = new ByteArrayWrapper(txHash);
-		txWaiters.put(txHashW, null);
-		long startBlock = ethereum.getBlockchain().getBestBlock().getNumber();
-		while (true) {
-			TransactionReceipt receipt = txWaiters.get(txHashW);
-			if (receipt != null) {
-				// TODO armazenar transações enviadas pela wallet
-				return receipt;
-			} else {
-				long curBlock = ethereum.getBlockchain().getBestBlock().getNumber();
-				if (curBlock > startBlock + 16) {
-					throw new RuntimeException("The transaction was not included during last 16 blocks: "
-							+ txHashW.toString().substring(0, 8));
-				} else {
-					logger.info("Waiting for block with transaction 0x" + txHashW.toString().substring(0, 8)
-							+ " included (" + (curBlock - startBlock) + " blocks received so far) ...");
-				}
-			}
-			synchronized (this) {
-				wait(20000);
-			}
-		}
-	}
-
-	private void getBalances() {
+	private void getBalances(NodeWallet nodeWallet) {
 		System.out.println("BALANCES");
 		System.out.println("Balance MINER: "
 				+ ethereum.getRepository().getBalance(Hex.decode("31e2e1ed11951c7091dfba62cd4b7145e947219c")));
@@ -242,20 +197,22 @@ public class RegularNode extends BasicSample {
 
 	private void printSentTransactionByNode(NodeWallet nodeWallet) {
 		System.out.println("\nSent Transactions by this Node:");
-		for (Transaction t : nodeWallet.getSentTransactions()) {
-			System.out.println("\n" + t.toString());
-			if (t.getData() != null) 
-				System.out.println(SerializationUtils.deserialize(t.getData()));
-		}
+		printTransactions(nodeWallet.getSentTransactions());
 		System.out.println("\n\n\n");
 	}
 	
 	private void printReceivedTransactionByNode(NodeWallet nodeWallet) {
 		System.out.println("\nReceive Transactions by this Node:");
-		for (Transaction t : nodeWallet.getReceivedTransactions()) {
-			System.out.println(t.toString());
-		}
+		printTransactions(nodeWallet.getReceivedTransactions());
 		System.out.println("\n\n\n");
+	}
+	
+	private void printTransactions(List<Transaction> transactions) {
+		for (Transaction t : transactions) {
+			System.out.println("\n" + t.toString());
+			if (t.getData() != null) 
+				System.out.println(SerializationUtils.deserialize(t.getData()));
+		}
 	}
 	
 	private NodeWallet getAllTransactionsByWallet(NodeWallet nodeWallet) {
