@@ -19,21 +19,6 @@ import com.cicinho.peer.transaction.PatientMedicalRecordTransaction;
 import com.cicinho.peer.wallet.NodeWallet;
 
 public class RegularNode extends BasicSample {
-
-	// PrivateKey
-	String privateKeySender = "3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c";
-	// PublicKey
-	// "5db10750e8caff27f906b41c71b3471057dd2004"
-
-	// PrivateKey
-	// "6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec"
-	// PublicKey
-	// "31e2e1ed11951c7091dfba62cd4b7145e947219c
-
-	// PrivateKey
-	// "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d"
-	// PublicKey
-	private String receiverPublicAddress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
 	
 	private Map<String, NodeWallet> nodeWalletsMap;
 
@@ -52,6 +37,21 @@ public class RegularNode extends BasicSample {
 				RegularNode.this.onBlock(block, receipts);
 			}
 		});
+		
+		// PrivateKey
+		String privateKeySender = "3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c";
+		// PublicKey
+		//String receiverPublicAddress = "5db10750e8caff27f906b41c71b3471057dd2004";
+
+		// PrivateKey
+		//String privateKeySender = "6ef8da380c27cea8fdf7448340ea99e8e2268fc2950d79ed47cbf6f85dc977ec";
+		// PublicKey
+		//String receiverPublicAddress = "31e2e1ed11951c7091dfba62cd4b7145e947219c;
+
+		// PrivateKey
+		//String privateKeySender = "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d";
+		// PublicKey
+		String receiverPublicAddress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
 		
 		NodeWallet nodeWallet = new NodeWallet(privateKeySender);
 		
@@ -79,7 +79,7 @@ public class RegularNode extends BasicSample {
 				switch (option) {
 				case 1:
 					try {
-						generateOneTransaction(nonce, nodeWallet);
+						generateOneTransaction(nonce, nodeWallet, receiverPublicAddress);
 						++nonce;
 					} catch (Exception e) {
 						logger.error("Error generating tx: ", e);
@@ -87,7 +87,7 @@ public class RegularNode extends BasicSample {
 					break;
 				case 2:
 					try {
-						generateTransactions(nodeWallet);
+						generateTransactions(nodeWallet, receiverPublicAddress);
 					} catch (Exception e) {
 						logger.error("Error generating tx: ", e);
 					}
@@ -104,7 +104,7 @@ public class RegularNode extends BasicSample {
 				case 6:
 					try {
 						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RAD", 86400, "");
-						sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, pmrt);
+						sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, pmrt, receiverPublicAddress);
 						++nonce;
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -135,7 +135,7 @@ public class RegularNode extends BasicSample {
 	 * Generate one simple value transfer transaction each 7 seconds. Thus blocks
 	 * will include one, several and none transactions
 	 */
-	private void generateTransactions(NodeWallet nodeWallet) throws Exception {
+	private void generateTransactions(NodeWallet nodeWallet, String receiverPublicAddress) throws Exception {
 		logger.info("Start generating transactions...");
 
 		// the sender which some coins from the genesis
@@ -155,7 +155,7 @@ public class RegularNode extends BasicSample {
 		}
 	}
 
-	private void generateOneTransaction(int nonce, NodeWallet nodeWallet) throws Exception {
+	private void generateOneTransaction(int nonce, NodeWallet nodeWallet, String receiverPublicAddress) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender which some coins from the genesis
@@ -170,7 +170,7 @@ public class RegularNode extends BasicSample {
 		ethereum.submitTransaction(tx);
 	}
 	
-	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet, PatientMedicalRecordTransaction pmrt) throws Exception {
+	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet, PatientMedicalRecordTransaction pmrt, String receiverPublicAddress) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender from the genesis
@@ -187,12 +187,8 @@ public class RegularNode extends BasicSample {
 
 	private void getBalances(NodeWallet nodeWallet) {
 		System.out.println("BALANCES");
-		System.out.println("Balance MINER: "
-				+ ethereum.getRepository().getBalance(Hex.decode("31e2e1ed11951c7091dfba62cd4b7145e947219c")));
 		System.out.println("Balance SENDER: " + ethereum.getRepository()
 				.getBalance(ECKey.fromPrivate(Hex.decode(nodeWallet.getPrivateKey())).getAddress()));
-		System.out.println("Balance RECEIVER: " + ethereum.getRepository().getBalance(Hex.decode(receiverPublicAddress))
-				+ "\n\n\n");
 	}
 
 	private void printSentTransactionByNode(NodeWallet nodeWallet) {
