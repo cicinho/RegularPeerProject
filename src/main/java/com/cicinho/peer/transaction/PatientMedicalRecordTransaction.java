@@ -15,12 +15,12 @@ public class PatientMedicalRecordTransaction implements Serializable{
 	
 	private String type;
 	
-	private Integer expiresIn;
+	private Long expiresIn;
 	
 	private String others;
 
 	public PatientMedicalRecordTransaction(String from, String to, String addresses, String operations, String type,
-			Integer expiresIn, String others) {
+			Long expiresIn, String others) {
 		this.from = from;
 		this.to = to;
 		this.addresses = addresses;
@@ -50,7 +50,7 @@ public class PatientMedicalRecordTransaction implements Serializable{
 		return type;
 	}
 
-	public Integer getExpiresIn() {
+	public Long getExpiresIn() {
 		return expiresIn;
 	}
 
