@@ -1,5 +1,6 @@
 package com.cicinho.peer.node;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,9 +14,10 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.samples.BasicSample;
 import org.ethereum.util.ByteUtil;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.util.SerializationUtils;
 
-import com.cicinho.peer.transaction.PatientMedicalRecordTransaction;
+import com.cicinho.peer.transaction.PatientMedicalRecord;
+import com.cicinho.peer.transaction.PatientMedicalRecord.Operation;
+import com.cicinho.peer.transaction.PatientMedicalRecord.Type;
 import com.cicinho.peer.wallet.NodeWallet;
 import com.google.gson.Gson;
 
@@ -40,9 +42,10 @@ public class RegularNode extends BasicSample {
 		});
 
 		// PrivateKey
-		//String privateKeySender = "3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c";
+		// String privateKeySender =
+		// "3ec771c31cac8c0dba77a69e503765701d3c2bb62435888d4ffa38fed60c445c";
 		// PublicKey
-		String receiverPublicAddress = "5db10750e8caff27f906b41c71b3471057dd2004";
+		// String receiverPublicAddress = "5db10750e8caff27f906b41c71b3471057dd2004";
 
 		// PrivateKey
 		// String privateKeySender =
@@ -51,10 +54,11 @@ public class RegularNode extends BasicSample {
 		// String receiverPublicAddress = "31e2e1ed11951c7091dfba62cd4b7145e947219c;
 
 		// PrivateKey
-		String privateKeySender =
-		 "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d";
+		String privateKeySender = "fee3b6045d75237490f1ba055bf6d034b2a83c71c78fb526b3183b5c68944f1d";
 		// PublicKey
-		//String receiverPublicAddress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
+		// String receiverPublicAddress = "ee0250c19ad59305b2bdb61f34b45b72fe37154f";
+
+		String receiverPublicAddress = "d76422428a0de2132185f2965f451c89ac909525";
 
 		NodeWallet nodeWallet = new NodeWallet(privateKeySender);
 
@@ -77,7 +81,7 @@ public class RegularNode extends BasicSample {
 
 				option = scanner.nextInt();
 
-				switch (option) {				
+				switch (option) {
 				case 1:
 					printSentTransactionByNode(nodeWallet);
 					break;
@@ -86,10 +90,12 @@ public class RegularNode extends BasicSample {
 					break;
 				case 3:
 					try {
-						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(
-								nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RDA", 1580522400000L,
-								"");
-						sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, new Gson().toJson(pmrt), receiverPublicAddress);
+						Map<String, List<Operation>> permissions = new HashMap<>();
+						permissions.put("/bloodTest", Arrays.asList(Operation.POST));
+						PatientMedicalRecord pmr = new PatientMedicalRecord(nodeWallet.getPublicKey(),
+								receiverPublicAddress, permissions, Type.RDA, 1580522400000L, "");
+						sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, new Gson().toJson(pmr),
+								receiverPublicAddress);
 						++nonce;
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -97,11 +103,13 @@ public class RegularNode extends BasicSample {
 					break;
 				case 4:
 					try {
-						PatientMedicalRecordTransaction pmrt = new PatientMedicalRecordTransaction(
-								nodeWallet.getPublicKey(), receiverPublicAddress, "/bloodTest", "POST", "RDA", 1580522400000L,
-								"");
+						Map<String, List<Operation>> permissions = new HashMap<>();
+						permissions.put("/bloodTest", Arrays.asList(Operation.POST));
+						PatientMedicalRecord pmr = new PatientMedicalRecord(nodeWallet.getPublicKey(),
+								receiverPublicAddress, permissions, Type.RDA, 1580522400000L, "");
 						while (true) {
-							sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, new Gson().toJson(pmrt), receiverPublicAddress);
+							sendOnePatientMedicalRecordTransaction(nonce, nodeWallet, new Gson().toJson(pmr),
+									receiverPublicAddress);
 							++nonce;
 							Thread.sleep(3000);
 						}
@@ -170,8 +178,8 @@ public class RegularNode extends BasicSample {
 		ethereum.submitTransaction(tx);
 	}
 
-	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet,
-			String pmrt, String receiverPublicAddress) throws Exception {
+	private void sendOnePatientMedicalRecordTransaction(int nonce, NodeWallet nodeWallet, String pmr,
+			String receiverPublicAddress) throws Exception {
 		logger.info("Start generating a transaction...");
 
 		// the sender from the genesis
@@ -179,8 +187,8 @@ public class RegularNode extends BasicSample {
 		byte[] receiverAddr = Hex.decode(receiverPublicAddress);
 
 		Transaction tx = new Transaction(ByteUtil.intToBytesNoLeadZeroes(nonce), ByteUtil.longToBytesNoLeadZeroes(0L),
-				ByteUtil.longToBytesNoLeadZeroes(0xfffff), receiverAddr, new byte[] { 0 },
-				pmrt.getBytes(), ethereum.getChainIdForNextBlock());
+				ByteUtil.longToBytesNoLeadZeroes(0xfffff), receiverAddr, new byte[] { 0 }, pmr.getBytes(),
+				ethereum.getChainIdForNextBlock());
 		tx.sign(senderKey);
 		logger.info("<== Submitting tx: " + tx);
 		ethereum.submitTransaction(tx);
@@ -208,15 +216,15 @@ public class RegularNode extends BasicSample {
 		for (Transaction t : transactions) {
 			System.out.println("\n" + t.toString());
 			if (t.getData() != null) {
-				try {		
+				try {
 					System.out.println(new String(t.getData(), "UTF-8"));
 				} catch (Exception e) {
 					// TODO: handle exception
 				}
-				
+
 			}
 		}
-	}	
+	}
 
 	private NodeWallet getAllTransactionsByWallet(NodeWallet nodeWallet) {
 		String nodeWalletAddress = nodeWallet.getPublicKey();
